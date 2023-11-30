@@ -36,7 +36,100 @@ int main(int argc, char** argv)
 //WARNING: This method will modify the hand array if a straight flush is present, setting values not in the final hand to 0 
 int findStraightFlush(int hand[HANDSIZE], const int values[HANDSIZE], const int suits[HANDSIZE], uint16_t* rank)
 {
+    int firstCardOfSuitFound = 0;
+    int straightTopValue = values[0];
+    int currentStraightValue;
+    int straightCount;
+    int currentSuit = HEART;
+    int hasSuitedAce;
 
+    //Check for a straight in each suit
+    while (currentSuit <= CLUB)
+    {
+        int index = 0;
+        while (index < HANDSIZE)
+        {
+            //Only check cards of the current suit
+            if (suits[index] == currentSuit)
+            {
+                //If this is the first card of the suit, setup some variables
+                if (!firstCardOfSuitFound)
+                {
+                    if (values[index] == ACE)
+                    {
+                        hasSuitedAce = 1;
+                    }
+                    straightCount = 1;
+                    straightTopValue = values[index];
+                    currentStraightValue = straightTopValue;
+                    firstCardOfSuitFound = 1;
+                }
+                //Otherwise, continue normally
+                else
+                {
+                    //Look for the next number in the straight
+                    if (values[index] == currentStraightValue - 1)
+                    {
+                        currentStraightValue = values[index];
+                        straightCount++;
+                        if (straightCount == 5)
+                        {
+                            break;
+                        }
+                    }
+                    //If it is not the next number, reset 
+                    else
+                    {
+                        straightCount = 1;
+                        straightTopValue = values[index];
+                    }
+                }
+                index++;
+            }
+        }
+
+        //If straightCount == 4, our straight must be 5, 4, 3, 2. Check for Ace wrap
+        if (straightCount == 4 && hasSuitedAce) straightCount++;
+
+        if (straightCount == 5)
+        {
+            break;
+        }
+
+        //Check for the next suit
+        currentSuit++;
+    }
+
+    //Return if we didn't find straight
+    if (straightCount != 5) return 0;
+    
+    //Encode straight into the rank
+    *rank ^= STRAIGHTFLUSH;
+    *rank ^= straightTopValue<<POSONE;
+
+    //Clear the hand value if it is not in the final hand
+    int index = 0;
+    while (index < HANDSIZE)
+    {
+        //If the card is in the straight flush suit, check if it is in the straight
+        if (suits[index] == currentSuit)
+        {
+            //If the card is not in the straight range, clear it
+            //No need to skip duplicates (i.e. two 7s) because there will only be one card of each number for a give suit
+            if (!((straightTopValue >= values[index] > straightTopValue - 4) || (straightTopValue == 5 && values[index] == ACE)))
+            {
+                hand[index] = 0;
+            }
+        }
+        //If the card is not in the straightflush suit, clear it
+        else
+        {
+            hand[index] = 0;
+        }
+        index++;
+    }
+
+    return 1;
 }
 
 //A method to search a hand for quads and encode its strength into the rank if present
@@ -279,6 +372,7 @@ int findFlush(int hand[HANDSIZE], const int values[HANDSIZE], int suits[HANDSIZE
             hand[i] = 0;
         }
     }
+
     return 1;
 }
 
@@ -286,7 +380,70 @@ int findFlush(int hand[HANDSIZE], const int values[HANDSIZE], int suits[HANDSIZE
 //WARNING: This method will modify the hand array if a straight is present, setting values not in the final hand to 0 
 int findStraight(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
 {
+    int straightTopValue = values[0];
+    int currentStraightValue = values[0];
+    int straightCount = 1;
+    int hasAce = values[0] == ACE ? 1 : 0;
 
+    int index = 1;
+    while (index < HANDSIZE)
+    {
+        //Check for the next number
+        if (values[index] == currentStraightValue - 1)
+        {
+            currentStraightValue = values[index];
+            straightCount++;
+            if (straightCount == 5)
+            {
+                break;
+            }
+        }
+        //If our value is not a duplicate of what we just checked, restart the straight
+        else if (values[index] != currentStraightValue)
+        {
+            straightCount = 1;
+            straightTopValue = values[index];
+        }
+        index++;
+    }
+
+    //If straightCount == 4, our straight must be 5, 4, 3, 2. Check for Ace wrap
+    if (straightCount == 4 && hasAce) straightCount++;
+
+    //Return if we didn't find straight
+    if (straightCount != 5) return 0;
+    
+    //Encode straight into the rank
+    *rank ^= STRAIGHT;
+    *rank ^= straightTopValue<<POSONE;
+
+    //Clear the hand value if it is not in the final hand
+    index = 0;
+    int lastPassedNumber = 0;
+    while (index < HANDSIZE)
+    {
+        //Check if we are in the typical straight range, or our straight range is 5-1 & we have an ACE
+        if ((straightTopValue >= values[index] > straightTopValue - 4) || (straightTopValue == 5 && values[index] == ACE))
+        {
+            //If we already "preserved this number", clear it
+            if (lastPassedNumber == values[index])
+            {
+                hand[index] = 0;
+            }
+            //If this is a new number in the straight, "preserve it"
+            else
+            {
+                lastPassedNumber = values[index];
+            }
+        }
+        else
+        {
+            hand[index] = 0;
+        }
+        index++;
+    }
+
+    return 1;
 }
 
 //A method to search a hand for trips and encode its strength into the rank if present
