@@ -15,6 +15,11 @@
 #define SPADE 2
 #define CLUB 3
 
+#define JACK 11
+#define QUEEN 12
+#define KING 13
+#define ACE 14
+
 void initializeDeck();
 void destroyDeck();
 void shuffle();
