@@ -1,2 +1,10 @@
-a.out
 .vscode
+build
+
+#Build files
+*.o
+*.d
+
+#Executables
+pokerPlayer
+thePokerTable

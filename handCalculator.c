@@ -27,11 +27,6 @@
 #define POSTHREE 0 
 #define HANDSIZE 7
 
-int main(int argc, char** argv)
-{
-
-}
-
 //A method to search a hand for a straight flush and encode its strength into the rank if present
 //WARNING: This method will modify the hand array if a straight flush is present, setting values not in the final hand to 0 
 int findStraightFlush(int hand[HANDSIZE], const int values[HANDSIZE], const int suits[HANDSIZE], uint16_t* rank)
