@@ -1,6 +1,9 @@
 #ifndef H_PLAYERSERVANT
 #define H_PLAYERSERVANT
 
-void* player_servant(void* player_param);
+#include "tableManager.h"
+
+void initializePlayers(game_state_t* _gameState);
+void* playerThread(void* player_param);
 
 #endif

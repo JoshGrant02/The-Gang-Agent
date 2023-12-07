@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-c -Wextra -g
 LDFLAGS=
 COMMONSOURCES=deck.c handCalculator.c
-TABLESOURCES=dealer.c
+TABLESOURCES=tableManager.c dealer.c bouncer.c playerServant.c
 PLAYERSOURCES=player.c
 COMMONOBJECTS=$(COMMONSOURCES:.c=.o)
 TABLEOBJECTS=$(TABLESOURCES:.c=.o)

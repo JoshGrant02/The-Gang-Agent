@@ -6,10 +6,18 @@
 #include <string.h>
 #include <stdio.h>
 #include "playerServant.h"
+#include "tableManager.h"
 
 #define BOUNCER_NAME "/tmp/pokerbouncer"
 
-void* bouncer_entry(void* param)
+static game_state_t* gameState;
+
+void initializeBouncer(game_state_t* _gameState)
+{
+    gameState = _gameState;
+}
+
+void* bouncerEntry(void* playerParam)
 {
     int listener = socket(AF_UNIX, SOCK_STREAM, 0);
     unlink(BOUNCER_NAME);
@@ -21,22 +29,19 @@ void* bouncer_entry(void* param)
     bind(listener, (struct sockaddr*) &listener_address, sizeof(struct sockaddr_un));
     listen(listener, 10);
 
-    //pthread_mutex_lock(&consoleMutex);
+    pthread_mutex_lock(&(gameState->consoleMutex));
     printf("BOUNCER: I'm waiting for players\n");
-    //pthread_mutex_unlock(&consoleMutex);
-
-    pthread_t players[10];
-    int num_players = 0;
+    pthread_mutex_unlock(&(gameState->consoleMutex));
 
     int player;
-    while(num_players < 2)
+    while(gameState->playerCount < 5)
     {
         socklen_t listener_size = sizeof(struct sockaddr_un);
         player = accept(listener, (struct sockaddr*) &listener_address, &listener_size);
-        pthread_create(&players[num_players], NULL, player_servant, (void*) player);
-
-        num_players++;
+        pthread_create(&(gameState->players[gameState->playerCount].playerThread), NULL, playerThread, (void*) player);
+        gameState->playerCount++;
     }
-    pthread_join(players[0], NULL);
-    num_players++;
+
+    pthread_join(gameState->players[gameState->playerCount].playerThread, NULL);
+    printf("I'm done waiting for people\n");
 }
