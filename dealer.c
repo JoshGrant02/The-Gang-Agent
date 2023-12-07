@@ -6,6 +6,7 @@
 #include "dealer.h"
 #include "deck.h"
 #include "stdio.h"
+#include "handCalculator.h"
 
 static game_state_t* gameState;
 
@@ -54,7 +55,9 @@ void* dealerEntry(void* dealerParam)
     {
         int card = dealCard();
         gameState->table.tableCards[i] = card;
-        printf("%d ", card);
+        char valueBuffer[3];
+        getCardValue(card, valueBuffer);
+        printf("%s ", valueBuffer);
     }
     printf("\n");
     pthread_mutex_unlock(&(gameState->consoleMutex));

@@ -1,31 +1,52 @@
 #include <stdint.h>
 #include "deck.h"
+#include "handCalculator.h"
 
-#define ROYALFLUSH (0b1111 << 12)
-#define STRAIGHTFLUSH (0b1110 << 12)
-#define QUADS (0b1101 << 12)
-#define FULLHOUSE (0b1100 << 12)
-#define FLUSH (0b1011 << 12)
-#define STRAIGHT (0b1010 << 12)
-#define TRIPS (0b1001 << 12)
-#define TWOPAIR (0b1000 << 12)
-#define PAIR (0b01 << 14)
-#define HAS_A (0b1 << 11)
-#define HAS_K (0b1 << 10)
-#define HAS_Q (0b1 << 9)
-#define HAS_J (0b1 << 8)
-#define HAS_10 (0b1 << 7)
-#define HAS_9 (0b1 << 6)
-#define HAS_8 (0b1 << 5)
-#define HAS_7 (0b1 << 4)
-#define HAS_6 (0b1 << 3)
-#define HAS_5 (0b1 << 2)
-#define HAS_4 (0b1 << 1)
-#define HAS_3 (0b1 << 0)
-#define POSONE 8
-#define POSTWO 4
-#define POSTHREE 0 
-#define HANDSIZE 7
+void getCardValue(int card, char valueBuffer[3])
+{
+    valueBuffer[3] = (char) 0; //Null terminator at the end
+
+    //Setting value
+    int value = (card % 13) + 2;
+    switch (value)
+    {
+        case ACE:
+            valueBuffer[0] = 'A';
+            break;
+        case KING:
+            valueBuffer[0] = 'K';
+            break;
+        case QUEEN:
+            valueBuffer[0] = 'Q';
+            break;
+        case JACK:
+            valueBuffer[0] = 'J';
+            break;
+        case 10:
+            valueBuffer[0] = 'T';
+            break;
+        default:
+            valueBuffer[0] = value + ASCIIZERO;
+    }
+
+    //Setting suit
+    int suit = card / 13;
+    switch (suit)
+    {
+        case HEART:
+            valueBuffer[1] = 'H';
+            break;
+        case DIAMOND:
+            valueBuffer[1] = 'D';
+            break;
+        case SPADE:
+            valueBuffer[1] = 'S';
+            break;
+        case CLUB:
+            valueBuffer[1] = 'C';
+            break;
+    }
+}
 
 //A method to search a hand for a straight flush and encode its strength into the rank if present
 //WARNING: This method will modify the hand array if a straight flush is present, setting values not in the final hand to 0 

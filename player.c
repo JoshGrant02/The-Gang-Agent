@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "handCalculator.h"
 
 #define BOUNCER_NAME "/tmp/pokerbouncer"
 #define CLIENT_NAME "/tmp/player"
@@ -65,7 +66,9 @@ int main(int argc, char** argv)
         {
             card |= buffer[i] << (8 * i);
         }
-        printf("I just got card %d\n", buffer[0]);
+        char valueBuffer[3];
+        getCardValue(card, valueBuffer);
+        printf("I just got card %s\n", valueBuffer);
     }
     
     //char buffer[100];
