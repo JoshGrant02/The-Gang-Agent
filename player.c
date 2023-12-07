@@ -11,6 +11,7 @@
 #define CLIENT_NAME "/tmp/player"
 
 void printHelp();
+void* receiver(void* param);
 
 int main(int argc, char** argv)
 {
@@ -53,11 +54,26 @@ int main(int argc, char** argv)
         printf("The Poker Table is currently not operating. Try again later\n");
         exit(1);
     }
+    
+    char buffer[sizeof(int)];
 
-    char buffer[100];
+    while(1)
+    {
+        ssize_t messageSize = recv(sock, buffer, sizeof(int), 0);
+        int card = 0;
+        for (size_t i = 0; i < sizeof(int); ++i)
+        {
+            card |= buffer[i] << (8 * i);
+        }
+        printf("I just got card %d\n", buffer[0]);
+    }
+    
+    //char buffer[100];
     int size_to_send;
     int size_sent;
     int size_echoed;
+
+    buffer[0] = 0;
 
     while (strcmp(buffer, "quit\n") != 0)
     {
@@ -86,6 +102,11 @@ int main(int argc, char** argv)
 
     close(sock);
     unlink(CLIENT_NAME);
+}
+
+void* receiver(void* param)
+{
+
 }
 
 void printHelp()
