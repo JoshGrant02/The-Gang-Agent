@@ -34,21 +34,31 @@ int main(int argc, char** argv)
     pthread_create(&bouncer, NULL, bouncerEntry, (void*)0);
 
     char buffer[100];
-    fgets(buffer, 100, stdin);
-    if (strcmp(buffer, "start\n") == 0)
+    buffer[0] = 0;
+
+    while (strcmp(buffer, "quit\n") != 0)
     {
-        pthread_mutex_lock(&(gameState->consoleMutex));
-        printf("Starting\n");
-        pthread_mutex_unlock(&(gameState->consoleMutex));
-        if (gameState->playerCount < 2)
+        fgets(buffer, 100, stdin);
+        if (strcmp(buffer, "start\n") == 0)
         {
             pthread_mutex_lock(&(gameState->consoleMutex));
-            printf("There are not enough players in the lobby. Try again later\n");
+            if (gameState->table.isActive)
+            {
+                printf("MANAGER: The game is already running\n");
+            }
+            else
+            {
+                if (gameState->playerCount < 2)
+                {
+                    printf("MANAGER: There are not enough players in the lobby. Try again later\n");
+                }
+                else
+                {
+                    printf("MANAGER: The game is starting\n");
+                    pthread_create(&dealer, NULL, dealerEntry, (void*)0);
+                }
+            }
             pthread_mutex_unlock(&(gameState->consoleMutex));
-        }
-        else
-        {
-            pthread_create(&dealer, NULL, dealerEntry, (void*)0);
         }
     }
     pthread_join(dealer, NULL);

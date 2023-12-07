@@ -12,6 +12,7 @@ typedef struct {
 
 typedef struct {
     pthread_t playerThread;
+    int playerSocket;
     int playerId;
     int atTable;
     int inHand;
