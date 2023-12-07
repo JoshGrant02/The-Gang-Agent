@@ -10,15 +10,15 @@
 #define BOUNCER_NAME "/tmp/pokerbouncer"
 #define CLIENT_NAME "/tmp/player"
 
+void printHelp();
+
 int main(int argc, char** argv)
 {
-    printf("I am a player\n");
-
     int sock;
 
     if ((sock = socket( AF_UNIX, SOCK_STREAM, 0 )) < 0)
     {
-        perror("Error creating socket");
+        perror("Socket failed to create");
         exit(1);
     }
 
@@ -33,7 +33,7 @@ int main(int argc, char** argv)
     // we must now bind the socket descriptor to the address info
     if (bind(sock, (struct sockaddr *) &sock_address, sizeof(sock_address))<0)
     {
-        printf("Gosh darn it\n");
+        printf("Socket failed to bind\n");
         exit(1);
     }
 
@@ -50,12 +50,9 @@ int main(int argc, char** argv)
     strcpy(server.sun_path,BOUNCER_NAME);
 
     if (connect(sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
-        perror("Connection error");
+        printf("The Poker Table is currently not operating. Try again later\n");
         exit(1);
     }
-
-    // ready to send
-    printf("Ready to send\n");
 
     char buffer[100];
     int size_to_send;
@@ -69,17 +66,47 @@ int main(int argc, char** argv)
         // get a line
         fgets(buffer, 100, stdin);
 
-        printf("Sending Message: %s", buffer);
-        // how big?
-        size_to_send = strlen(buffer);
+        if (strcmp(buffer, "help\n") == 0)
+        {
+            printHelp();
+        }
+        else
+        {
+            printf("Sending Message: %s", buffer);
+            // how big?
+            size_to_send = strlen(buffer);
 
-        // send to server
-        size_sent = send(sock, buffer, size_to_send, 0);
-        if (size_sent < 0) {
-            perror("Send error");
+            // send to server
+            size_sent = send(sock, buffer, size_to_send, 0);
+            if (size_sent < 0) {
+                perror("Send error");
+            }
         }
     }
 
     close(sock);
     unlink(CLIENT_NAME);
+}
+
+void printHelp()
+{
+    printf("Below is a list of all commands that you can run. They are split into lobby, table, and turn commands:\n");
+    printf("\nLobby Commands: These commands can only be ran when you are in the lobby\n");
+    printf("\thelp - Print this help message\n");
+    printf("\tquit - Quit the game\n");
+    printf("\tcheckBalance - Print your current chip balance to the console\n");
+    printf("\tqueueEnter - Queue to enter the table once the current hand is over\n");
+    printf("\tbuyIn <value> - Add <value> to your current chip balance\n");
+
+    printf("\nTable Commands: These commands can be run anytime while at the table\n");
+    printf("\thelp - Print this help message\n");
+    printf("\tcheckBalance - Print your current chip balance to the console\n");
+    printf("\tqueueLeave - Queue to leave the table once the current hand is over\n");
+
+    printf("\nTurn Commands: These commands can only be run when it is your turn at the table\n");
+    printf("\tbet <value> - Bet the specified value. <value> must be >= current bet\n");
+    printf("\traise <value> - Raise the bet by the specified value\n");
+    printf("\tcheck - Check your turn. Can only be ran if current bet == 0\n");
+    printf("\tfold - Fold your hand\n");
+    printf("\tall in - Equivalent to bet <chip balance>. Can be ran if chip balance < current bet\n\n");
 }
