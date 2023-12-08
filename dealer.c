@@ -21,7 +21,6 @@ void* dealerEntry(void* dealerParam)
 {
     while (1)
     {
-        while (gameState->table.isActive == 0); //Busy wait until the table is active
         pthread_mutex_lock(&(gameState->consoleMutex));
         printf("DEALER: Shuffling..\n");
         pthread_mutex_unlock(&(gameState->consoleMutex));
@@ -141,8 +140,30 @@ void* dealerEntry(void* dealerParam)
                 printf("%s ", valueBuffer);
             }
         }
-        printf("\n");
+        printf("\n\n");
         pthread_mutex_unlock(&(gameState->consoleMutex));
-        gameState->table.isActive = 0;
+
+        if (gameState->table.isActive == 0) break;
+        
+        pthread_mutex_lock(&(gameState->consoleMutex));
+        printf("DEALER: The next hand will start in 10 seconds..\n");
+        pthread_mutex_unlock(&(gameState->consoleMutex));
+        usleep(7000000);
+        pthread_mutex_lock(&(gameState->consoleMutex));
+        printf("DEALER: The next hand will start in 3 seconds..\n");
+        pthread_mutex_unlock(&(gameState->consoleMutex));
+        usleep(1000000);
+        pthread_mutex_lock(&(gameState->consoleMutex));
+        printf("DEALER: The next hand will start in 2 seconds..\n");
+        pthread_mutex_unlock(&(gameState->consoleMutex));
+        usleep(1000000);
+        pthread_mutex_lock(&(gameState->consoleMutex));
+        printf("DEALER: The next hand will start in 1 seconds..\n");
+        pthread_mutex_unlock(&(gameState->consoleMutex));
+        usleep(1000000);
     }
+    pthread_mutex_lock(&(gameState->consoleMutex));
+    printf("DEALER: The table is closing. Goodnight all!\n");
+    pthread_mutex_unlock(&(gameState->consoleMutex));
+    return (void*) 0;
 }

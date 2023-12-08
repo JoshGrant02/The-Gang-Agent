@@ -823,7 +823,7 @@ void findHighCard(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank
     //Clear the cards from the hand that are not high cards
     for (int i = 5; i < HANDSIZE; i++)
     {
-        hand[HANDSIZE] = 0;
+        hand[i] = 0;
     }
 
     #ifdef DEBUG

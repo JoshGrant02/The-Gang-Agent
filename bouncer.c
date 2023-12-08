@@ -10,6 +10,7 @@
 #include "tableManager.h"
 
 #define BOUNCER_NAME "/tmp/pokerbouncer"
+#define CLIENT_NAME "/tmp/player"
 
 static game_state_t* gameState;
 
@@ -26,6 +27,12 @@ void* bouncerEntry(void* playerParam)
     struct sockaddr_un listener_address;
     listener_address.sun_family = AF_UNIX;
     strcpy(listener_address.sun_path, BOUNCER_NAME);
+    memcpy(&(gameState->bouncerAddress), &listener_address, sizeof(struct sockaddr_un));
+
+    struct sockaddr_un player_address;
+    player_address.sun_family = AF_UNIX;
+    strcpy(player_address.sun_path, CLIENT_NAME);
+    memcpy(&(gameState->playerAddress), &player_address, sizeof(struct sockaddr_un));
 
     bind(listener, (struct sockaddr*) &listener_address, sizeof(struct sockaddr_un));
     listen(listener, 10);
@@ -34,7 +41,7 @@ void* bouncerEntry(void* playerParam)
     printf("BOUNCER: I'm waiting for players\n");
     pthread_mutex_unlock(&(gameState->consoleMutex));
 
-    //TODO: do this better?
+    //Register signal handler for card distribution
     struct sigaction sa;
     sa.sa_sigaction = distributeCard;
     sigemptyset(&sa.sa_mask);
@@ -61,4 +68,5 @@ void* bouncerEntry(void* playerParam)
 
     pthread_join(gameState->players[gameState->playerCount].playerThread, NULL);
     printf("I'm done waiting for people\n");
+    return (void*) 0;
 }

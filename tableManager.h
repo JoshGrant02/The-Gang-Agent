@@ -2,6 +2,8 @@
 #define H_TABLEMANAGER
 
 #include <pthread.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 typedef struct {
     int isActive;
@@ -21,6 +23,8 @@ typedef struct {
 } player_state_t;
 
 typedef struct {
+    struct sockaddr bouncerAddress;
+    struct sockaddr playerAddress;
     pthread_mutex_t consoleMutex;
     int playerCount;
     table_state_t table;

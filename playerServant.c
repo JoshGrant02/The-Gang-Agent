@@ -51,16 +51,18 @@ void* playerThread(void* playerNum)
 
     while (strcmp(message, "quit\n") != 0)
     {
-        ssize_t messageSize = recv(playerState->playerSocket, buffer, 100, 0);
+        ssize_t messageSize = recvfrom(playerState->playerSocket, buffer, 100, 0, &(gameState->playerAddress), sizeof(struct sockaddr_un));
         buffer[messageSize] = 0;
         //strncpy(message, buffer, messageSize);
         //message[messageSize] = 0;//Adding null terminator because strncpy is dumb
         //pthread_mutex_lock(&(gameState->consoleMutex));
-        //printf("recieving message from %d: %s\n", player, message);
+        //printf("Recieving message from %d: %s\n", player, message);
         //pthread_mutex_unlock(&(gameState->consoleMutex));
     }
     pthread_mutex_lock(&(gameState->consoleMutex));
     printf("Player is quitting\n");
     pthread_mutex_unlock(&(gameState->consoleMutex));
     close(player);
+
+    return (void*) 0;
 }

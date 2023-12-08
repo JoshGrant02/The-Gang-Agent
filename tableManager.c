@@ -36,7 +36,7 @@ int main(int argc, char** argv)
     char buffer[100];
     buffer[0] = 0;
 
-    while (strcmp(buffer, "quit\n") != 0)
+    while (1)
     {
         fgets(buffer, 100, stdin);
         if (strcmp(buffer, "start\n") == 0)
@@ -55,18 +55,24 @@ int main(int argc, char** argv)
                 else
                 {
                     printf("MANAGER: The game is starting\n");
-                    //First time starting: Create the dealer thread
-                    if (dealer == 0)
-                    {
-                        pthread_create(&dealer, NULL, dealerEntry, (void*)0);
-                    }
                     gameState->table.isActive = 1;
+                    pthread_create(&dealer, NULL, dealerEntry, (void*)0);
                 }
             }
             pthread_mutex_unlock(&(gameState->consoleMutex));
         }
+        else if (strcmp(buffer, "quit\n") == 0)
+        {
+            pthread_mutex_lock(&(gameState->consoleMutex));
+            printf("MANAGER: The table will close after this hand\n");
+            pthread_mutex_unlock(&(gameState->consoleMutex));
+            gameState->table.isActive = 0;
+            break;
+        }
     }
     pthread_join(dealer, NULL);
+    printf("I collected the dealer\n");
     pthread_join(bouncer, NULL);
+    printf("I collected the bouncer\n");
     free(gameState);
 }
