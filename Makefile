@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-c -Wextra -g
+CFLAGS=-c -Wall -g
 LDFLAGS=-pthread
 COMMONSOURCES=deck.c handCalculator.c
 TABLESOURCES=tableManager.c dealer.c bouncer.c playerServant.c

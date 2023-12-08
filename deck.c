@@ -7,7 +7,7 @@
  * The deck must be initialized before use to allocate dynamic memory to store the cards.
  * The deck must be destroyed the end of use to free the allocated memory.
  * Each card in the deck is an integer from 1 to 52, where each integer translates to 1 card in a 52 card deck.
- * The value can be determined by performing (number % 13 + 2), where 11->J, 12->Q, 13->K, 14->A
+ * The value can be determined by performing ((number - 1) % 13 + 2), where 11->J, 12->Q, 13->K, 14->A
  * and all other numbers are their respective values.
  * The suit can be determined by doing performing (number / 13 round down), where 0->Hearts, 1->Diamonds, 2->Spades, and 3->Clubs
  */

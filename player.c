@@ -105,6 +105,7 @@ int main(int argc, char** argv)
 
     close(sock);
     unlink(CLIENT_NAME);
+    return 0;
 }
 
 void* receiver(void* param)

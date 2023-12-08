@@ -27,6 +27,8 @@
 #define POSTHREE 0 
 #define HANDSIZE 7
 #define ASCIIZERO 48
+#define HANDINDICATOR (0b1111 << 12)
+#define PAIRINDICATOR (0b11 << 14)
 
 void getCardValue(int card, char valueBuffer[3]);
 int calculateRank(int hand[HANDSIZE]);

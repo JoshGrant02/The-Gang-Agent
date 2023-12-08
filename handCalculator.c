@@ -1,13 +1,14 @@
 #include <stdint.h>
+#include <stdio.h>
 #include "deck.h"
 #include "handCalculator.h"
 
 void getCardValue(int card, char valueBuffer[3])
 {
-    valueBuffer[3] = (char) 0; //Null terminator at the end
+    valueBuffer[2] = (char) 0; //Null terminator at the end
 
     //Setting value
-    int value = (card % 13) + 2;
+    int value = ((card - 1) % 13) + 2;
     switch (value)
     {
         case ACE:
@@ -100,8 +101,8 @@ int findStraightFlush(int hand[HANDSIZE], const int values[HANDSIZE], const int 
                         straightTopValue = values[index];
                     }
                 }
-                index++;
             }
+            index++;
         }
 
         //If straightCount == 4, our straight must be 5, 4, 3, 2. Check for Ace wrap
@@ -132,7 +133,7 @@ int findStraightFlush(int hand[HANDSIZE], const int values[HANDSIZE], const int 
         {
             //If the card is not in the straight range, clear it
             //No need to skip duplicates (i.e. two 7s) because there will only be one card of each number for a give suit
-            if (!((straightTopValue >= values[index] > straightTopValue - 4) || (straightTopValue == 5 && values[index] == ACE)))
+            if (!((straightTopValue >= values[index] && values[index] >= straightTopValue - 5) || (straightTopValue == 5 && values[index] == ACE)))
             {
                 hand[index] = 0;
             }
@@ -145,6 +146,9 @@ int findStraightFlush(int hand[HANDSIZE], const int values[HANDSIZE], const int 
         index++;
     }
 
+    #ifdef DEBUG
+    printf("Found Straight Flush\n");
+    #endif
     return 1;
 }
 
@@ -160,9 +164,9 @@ int findQuads(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
     int kicker = values[0];
 
     //Loop through hand, looking for quads
-    for (; quadsIndex < HANDSIZE - 4; quadsIndex++)
+    for (; quadsIndex <= HANDSIZE - 4; quadsIndex++)
     {
-        if (values[quadsIndex] == values[quadsIndex + 1] == values[quadsIndex + 2] == values[quadsIndex + 3])
+        if (values[quadsIndex] == values[quadsIndex + 1] && values[quadsIndex + 1] == values[quadsIndex + 2] && values[quadsIndex + 2] == values[quadsIndex + 3])
         {
             quadsValue = values[quadsIndex];
             quadsFound = 1;
@@ -206,6 +210,9 @@ int findQuads(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
         }
     }
 
+    #ifdef DEBUG
+    printf("Found Quads\n");
+    #endif
     return 1;
 }
 
@@ -226,9 +233,9 @@ int findFullHouse(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank
     while (index < HANDSIZE)
     {
         //Look for trips if we haven't found it
-        if (!tripsFound && (HANDSIZE - index) > 3)
+        if (!tripsFound && index <= HANDSIZE - 3)
         {
-            if (values[index] == values[index + 1] == values[index + 2])
+            if (values[index] == values[index + 1] && values[index + 1] == values[index + 2])
             {
                 tripsIndex = index;
                 tripsValue = values[index];
@@ -237,7 +244,7 @@ int findFullHouse(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank
             }
         }
         //Look for pair if we haven't found it
-        if (!pairFound && (HANDSIZE - index) > 2)
+        if (!pairFound && index <= HANDSIZE - 2)
         {
             if (values[index] == values[index + 1])
             {
@@ -253,6 +260,11 @@ int findFullHouse(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank
 
     //Didn't find a full house
     if (!(tripsFound && pairFound)) return 0;
+
+    #ifdef DEBUG
+    printf("Trips Index: %d\n", tripsIndex);
+    printf("Pair Index: %d\n", pairIndex);
+    #endif
 
     //Encode full house into rank
     *rank ^= FULLHOUSE;
@@ -281,6 +293,9 @@ int findFullHouse(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank
         }
     }
 
+    #ifdef DEBUG
+    printf("Found Full House\n");
+    #endif
     return 1;
 }
 
@@ -334,11 +349,14 @@ int findFlush(int hand[HANDSIZE], const int values[HANDSIZE], int suits[HANDSIZE
     //Didn't find a flush
     if (flushsuit == -1) return 0;
 
+    //Encode flush
+    *rank ^= FLUSH;
+
     //Loop through cards, encoding the first 5 of the flushsuit into the rank
     int numEncoded = 0;
     for (int i = 0; i < HANDSIZE; i++)
     {
-        if (suits[i] == flushsuit && numEncoded < 5)
+        if ((suits[i] == flushsuit) && (numEncoded <= 5))
         {
             numEncoded++;
             //Each number has a one hot encoded bit, which is turned on if the hand has it
@@ -389,6 +407,9 @@ int findFlush(int hand[HANDSIZE], const int values[HANDSIZE], int suits[HANDSIZE
         }
     }
 
+    #ifdef DEBUG
+    printf("Found Flush\n");
+    #endif
     return 1;
 }
 
@@ -439,7 +460,7 @@ int findStraight(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
     while (index < HANDSIZE)
     {
         //Check if we are in the typical straight range, or our straight range is 5-1 & we have an ACE
-        if ((straightTopValue >= values[index] > straightTopValue - 4) || (straightTopValue == 5 && values[index] == ACE))
+        if ((straightTopValue >= values[index] && values[index] >= straightTopValue - 5) || (straightTopValue == 5 && values[index] == ACE))
         {
             //If we already "preserved this number", clear it
             if (lastPassedNumber == values[index])
@@ -459,6 +480,9 @@ int findStraight(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
         index++;
     }
 
+    #ifdef DEBUG
+    printf("Found Straight\n");
+    #endif
     return 1;
 }
 
@@ -476,9 +500,9 @@ int findTrips(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
     int bottomKicker = values[1];
 
     //Loop through hand, looking for trips
-    for (; tripsIndex < HANDSIZE - 3; tripsIndex++)
+    for (; tripsIndex <= HANDSIZE - 3; tripsIndex++)
     {
-        if (values[tripsIndex] == values[tripsIndex + 1] == values[tripsIndex + 2])
+        if (values[tripsIndex] == values[tripsIndex + 1] && values[tripsIndex + 1] == values[tripsIndex + 2])
         {
             tripsValue = values[tripsIndex];
             tripsFound = 1;
@@ -503,6 +527,12 @@ int findTrips(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
     //Return if we didnt find trips
     if (!tripsFound) return 0;
 
+    #ifdef DEBUG
+    printf("Trips Index: %d\n", tripsIndex);
+    printf("Top Kicker Index: %d\n", topKickerIndex);
+    printf("Bottom Kicker Index: %d\n", bottomKickerIndex);
+    #endif
+
     //Encode trips into rank
     *rank ^= TRIPS;
     *rank ^= tripsValue<<POSONE;
@@ -513,13 +543,13 @@ int findTrips(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
     int index;
     while (index < HANDSIZE)
     {
-        //Skip the quads
+        //Skip the trips
         if (index == tripsIndex)
         {
             index += 3;
         }
         //Skip the kickers
-        else if (index == topKickerIndex || index == bottomKicker)
+        else if (index == topKickerIndex || index == bottomKickerIndex)
         {
             index++;
         }
@@ -531,6 +561,9 @@ int findTrips(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
         }
     }
 
+    #ifdef DEBUG
+    printf("Found Trips\n");
+    #endif
     return 1;
 }
 
@@ -551,7 +584,7 @@ int findTwoPair(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
 
     int index = 0;
     //Loop through the hand, looking for the first pair
-    while (index < HANDSIZE - 2)
+    while (index <= HANDSIZE - 2)
     {
         if (values[index] == values[index + 1])
         {
@@ -560,7 +593,7 @@ int findTwoPair(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
             topPairFound = 1;
             index += 2;
             //If first pair is at 1st card, kicker gets bumped back to 3rd card
-            if (index == 0)
+            if (topPairIndex == 0)
             {
                 kickerIndex = 2;
                 kickerValue = values[2];
@@ -570,7 +603,7 @@ int findTwoPair(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
         index++;
     }
     //If we found the first pair and there is still hand to loop through, look for second pair
-    while (index < (HANDSIZE - 2))
+    while (index <= (HANDSIZE - 2))
     {
         if (values[index] == values[index + 1])
         {
@@ -579,7 +612,7 @@ int findTwoPair(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
             bottomPairFound = 1;
             index += 2;
             //If second pair is at 3rd card, first pair must've been at 1st card, so kicker is 4th card
-            if (index == 2)
+            if (bottomPairIndex == 2)
             {
                 kickerIndex = 4;
                 kickerValue = values[4];
@@ -590,6 +623,12 @@ int findTwoPair(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
     }
 
     if (!(topPairFound && bottomPairFound)) return 0;
+
+    #ifdef DEBUG
+    printf("Top Pair Index: %d\n", topPairIndex);
+    printf("Bottom Pair Index: %d\n", bottomPairIndex);
+    printf("Kicker Index: %d\n", kickerIndex);
+    #endif
 
     //Encode full house into rank
     *rank ^= TWOPAIR;
@@ -609,7 +648,7 @@ int findTwoPair(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
         //Skip the kicker
         else if (index == kickerIndex)
         {
-            index ++;
+            index++;
         }
         //Clear other cards
         else
@@ -619,6 +658,9 @@ int findTwoPair(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
         }
     }
 
+    #ifdef DEBUG
+    printf("Found Two Pair\n");
+    #endif
     return 1;
 }
 
@@ -637,13 +679,13 @@ int findPair(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
     int bottomKickerIndex = 2;
     int bottomKicker = values[3];
 
-    //Loop through hand, looking for trips
-    for (; pairIndex < HANDSIZE - 2; pairIndex++)
+    //Loop through hand, looking for a pair
+    for (; pairIndex <= HANDSIZE - 2; pairIndex++)
     {
         if (values[pairIndex] == values[pairIndex + 1])
         {
             pairValue = values[pairIndex];
-            pairIndex = 1;
+            pairFound = 1;
             //If pair is at the beginning, the kickers are the 3rd, 4th and 5th cards
             if (pairIndex == 0)
             {
@@ -675,6 +717,13 @@ int findPair(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
     //Return if we didnt find trips
     if (!pairFound) return 0;
 
+    #ifdef DEBUG
+    printf("Pair Index: %d\n", pairIndex);
+    printf("Top Kicker Index: %d\n", topKickerIndex);
+    printf("Middle Kicker Index: %d\n", middleKickerIndex);
+    printf("Bottom Kicker Index: %d\n", bottomKickerIndex);
+    #endif
+
     //Encode pair and kickers into rank
     //Adjust kickers so they will always be a number 0-9
     //Subtract 2 to adjust range from 2-14 to 0-12
@@ -699,13 +748,13 @@ int findPair(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
     int index;
     while (index < HANDSIZE)
     {
-        //Skip the quads
+        //Skip the pair
         if (index == pairIndex)
         {
-            index += 3;
+            index += 2;
         }
         //Skip the kickers
-        else if (index == topKickerIndex || index == middleKicker || index == bottomKicker)
+        else if (index == topKickerIndex || index == middleKickerIndex || index == bottomKickerIndex)
         {
             index++;
         }
@@ -717,6 +766,9 @@ int findPair(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank)
         }
     }
 
+    #ifdef DEBUG
+    printf("Found Pair\n");
+    #endif
     return 1;
 }
 
@@ -773,6 +825,10 @@ void findHighCard(int hand[HANDSIZE], const int values[HANDSIZE], uint16_t* rank
     {
         hand[HANDSIZE] = 0;
     }
+
+    #ifdef DEBUG
+    printf("I have a high card :(\n");
+    #endif
 }
 
 //A method to reorder the hand from higherst card value to lowest card value
@@ -781,28 +837,28 @@ void sortHand(int hand[HANDSIZE], int values[HANDSIZE], int suits[HANDSIZE])
 {
     for (int index = 0; index < HANDSIZE; index++)
     {
-        int lowestIndex = index;
+        int highestIndex = index;
         int highestValue = values[index];
         for (int i = index; i < HANDSIZE; i++)
         {
             if (values[i] > highestValue)
             {
-                lowestIndex = i;
+                highestIndex = i;
                 highestValue = values[i];
             }
-            //Reorder values array
-            int temp = values[index];
-            values[index] = values[lowestIndex];
-            values[lowestIndex] = temp;
-            //Synchronously reorder suits array
-            temp = suits[index];
-            suits[index] = suits[lowestIndex];
-            suits[lowestIndex] = temp;
-            //Synchronously reorder hand array
-            temp = hand[index];
-            hand[index] = hand[lowestIndex];
-            hand[lowestIndex] = temp;
         }
+        //Reorder values array
+        int temp = values[index];
+        values[index] = values[highestIndex];
+        values[highestIndex] = temp;
+        //Synchronously reorder suits array
+        temp = suits[index];
+        suits[index] = suits[highestIndex];
+        suits[highestIndex] = temp;
+        //Synchronously reorder hand array
+        temp = hand[index];
+        hand[index] = hand[highestIndex];
+        hand[highestIndex] = temp;
     }
 }
 
@@ -821,10 +877,29 @@ int calculateRank(int hand[HANDSIZE])
     //Calculate values and suits for each card
     for (int i = 0; i < HANDSIZE; i++)
     {
-        values[i] = hand[i] % 13 + 2;
+        values[i] = ((hand[i] - 1) % 13) + 2;
         suits[i] = hand[i] / 13;
     }
     sortHand(hand, values, suits);
+    
+    #ifdef DEBUG
+    for (int i = 0; i < HANDSIZE; i++)
+    {
+        printf("%d ", hand[i]);
+    }
+    printf("\n");
+    for (int i = 0; i < HANDSIZE; i++)
+    {
+        printf("%d ", values[i]);
+    }
+    printf("\n");
+    for (int i = 0; i < HANDSIZE; i++)
+    {
+        printf("%d ", suits[i]);
+    }
+    printf("\n");
+    #endif
+    
     //Check for straight
     if (findStraightFlush(hand, values, suits, &rank)) return rank;
     if (findQuads(hand, values, &rank)) return rank;

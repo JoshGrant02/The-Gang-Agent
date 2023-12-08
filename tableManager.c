@@ -28,8 +28,8 @@ int main(int argc, char** argv)
     initializeBouncer(gameState);
     initializePlayers(gameState);
 
-    pthread_t bouncer;
-    pthread_t dealer;
+    pthread_t bouncer = 0;
+    pthread_t dealer = 0;
 
     pthread_create(&bouncer, NULL, bouncerEntry, (void*)0);
 
@@ -55,7 +55,12 @@ int main(int argc, char** argv)
                 else
                 {
                     printf("MANAGER: The game is starting\n");
-                    pthread_create(&dealer, NULL, dealerEntry, (void*)0);
+                    //First time starting: Create the dealer thread
+                    if (dealer == 0)
+                    {
+                        pthread_create(&dealer, NULL, dealerEntry, (void*)0);
+                    }
+                    gameState->table.isActive = 1;
                 }
             }
             pthread_mutex_unlock(&(gameState->consoleMutex));
