@@ -6,7 +6,7 @@
 #include <sys/un.h>
 #include <string.h>
 #include <stdio.h>
-#include "playerServant.h"
+#include "butler.h"
 #include "tableManager.h"
 
 #define BOUNCER_NAME "/tmp/pokerbouncer"

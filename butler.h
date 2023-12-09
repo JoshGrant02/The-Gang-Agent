@@ -1,5 +1,5 @@
-#ifndef H_PLAYERSERVANT
-#define H_PLAYERSERVANT
+#ifndef H_BUTLER
+#define H_BUTLER
 
 #include <signal.h>
 #include "tableManager.h"

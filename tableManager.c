@@ -9,7 +9,7 @@
 #include "tableManager.h"
 #include "dealer.h"
 #include "bouncer.h"
-#include "playerServant.h"
+#include "butler.h"
 
 #define BOUNCER_NAME "/tmp/pokerbouncer"
 
@@ -70,7 +70,7 @@ int main(int argc, char** argv)
             break;
         }
     }
-    
+
     pthread_join(dealer, NULL);
     pthread_mutex_lock(&(gameState->consoleMutex));
     printf("I collected the dealer\n");

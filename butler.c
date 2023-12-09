@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
-#include "playerServant.h"
+#include "butler.h"
 #include "tableManager.h"
 
 static game_state_t* gameState;
