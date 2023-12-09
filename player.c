@@ -60,17 +60,23 @@ int main(int argc, char** argv)
 
     while(1)
     {
-        ssize_t messageSize = recv(sock, buffer, sizeof(int), 0);
+        recv(sock, buffer, sizeof(int), 0);
         int card = 0;
         for (size_t i = 0; i < sizeof(int); ++i)
         {
             card |= buffer[i] << (8 * i);
+        }
+        if (card == -1)
+        {
+            printf("The table is quitting :( I am leaving\n");
+            break;
         }
         char valueBuffer[3];
         getCardValue(card, valueBuffer);
         printf("I just got card %s\n", valueBuffer);
     }
     
+    /*
     //char buffer[100];
     int size_to_send;
     int size_sent;
@@ -102,19 +108,16 @@ int main(int argc, char** argv)
             }
         }
     }
+    */
 
     close(sock);
     unlink(CLIENT_NAME);
     return 0;
 }
 
-void* receiver(void* param)
-{
-
-}
-
 void printHelp()
 {
+    printf("FOR THE PURPOSE OF THE CPE 2600 LAB, NONE OF THESE ARE IMPLEMENTED\n");
     printf("Below is a list of all commands that you can run. They are split into lobby, table, and turn commands:\n");
     printf("\nLobby Commands: These commands can only be ran when you are in the lobby\n");
     printf("\thelp - Print this help message\n");

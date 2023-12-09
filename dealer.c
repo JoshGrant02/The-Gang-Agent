@@ -143,8 +143,8 @@ void* dealerEntry(void* dealerParam)
         printf("\n\n");
         pthread_mutex_unlock(&(gameState->consoleMutex));
 
-        if (gameState->table.isActive == 0) break;
-        
+        if (gameState->closingTime) break;
+
         pthread_mutex_lock(&(gameState->consoleMutex));
         printf("DEALER: The next hand will start in 10 seconds..\n");
         pthread_mutex_unlock(&(gameState->consoleMutex));
@@ -162,6 +162,7 @@ void* dealerEntry(void* dealerParam)
         pthread_mutex_unlock(&(gameState->consoleMutex));
         usleep(1000000);
     }
+    gameState->table.isActive = 0;
     pthread_mutex_lock(&(gameState->consoleMutex));
     printf("DEALER: The table is closing. Goodnight all!\n");
     pthread_mutex_unlock(&(gameState->consoleMutex));

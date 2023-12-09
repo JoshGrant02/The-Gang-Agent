@@ -66,13 +66,19 @@ int main(int argc, char** argv)
             pthread_mutex_lock(&(gameState->consoleMutex));
             printf("MANAGER: The table will close after this hand\n");
             pthread_mutex_unlock(&(gameState->consoleMutex));
-            gameState->table.isActive = 0;
+            gameState->closingTime = 1;
             break;
         }
     }
+    
     pthread_join(dealer, NULL);
+    pthread_mutex_lock(&(gameState->consoleMutex));
     printf("I collected the dealer\n");
+    pthread_mutex_unlock(&(gameState->consoleMutex));
+
     pthread_join(bouncer, NULL);
+    pthread_mutex_lock(&(gameState->consoleMutex));
     printf("I collected the bouncer\n");
+    pthread_mutex_unlock(&(gameState->consoleMutex));
     free(gameState);
 }

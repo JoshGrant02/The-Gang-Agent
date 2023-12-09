@@ -46,6 +46,8 @@ void* playerThread(void* playerNum)
     int player = (int) playerNum;
     player_state_t* playerState = &(gameState->players[player]);
     playerState->atTable = 1;
+
+    /*
     char message[100];
     char buffer[100];
 
@@ -59,8 +61,21 @@ void* playerThread(void* playerNum)
         //printf("Recieving message from %d: %s\n", player, message);
         //pthread_mutex_unlock(&(gameState->consoleMutex));
     }
+    */
+
+   //Wait until its closing time and the table has finished
+    while (!(gameState->closingTime) || gameState->table.isActive);
+
+    int closingTime = -1;
+    char buffer[sizeof(int)];
+    for (size_t i = 0; i < sizeof(int); ++i)
+    {
+        buffer[i] = (closingTime >> (8 * i)) & 0xFF;
+    }
+    send(playerState->playerSocket, buffer, sizeof(int), 0);
+
     pthread_mutex_lock(&(gameState->consoleMutex));
-    printf("Player is quitting\n");
+    printf("Player %d is leaving\n", player);
     pthread_mutex_unlock(&(gameState->consoleMutex));
     close(player);
 

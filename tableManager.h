@@ -23,6 +23,7 @@ typedef struct {
 } player_state_t;
 
 typedef struct {
+    int closingTime;
     struct sockaddr bouncerAddress;
     struct sockaddr playerAddress;
     pthread_mutex_t consoleMutex;

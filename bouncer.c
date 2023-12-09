@@ -21,7 +21,7 @@ void initializeBouncer(game_state_t* _gameState)
 
 void* bouncerEntry(void* playerParam)
 {
-    int listener = socket(AF_UNIX, SOCK_STREAM, 0);
+    int listener = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
     unlink(BOUNCER_NAME);
     
     struct sockaddr_un listener_address;
@@ -54,19 +54,47 @@ void* bouncerEntry(void* playerParam)
     }
 
     gameState->playerCount = 0;
-    while(gameState->playerCount < 5)
+    socklen_t listener_size = sizeof(struct sockaddr_un);
+    while(gameState->playerCount < 10)
     {
-        socklen_t listener_size = sizeof(struct sockaddr_un);
         int playerSocket = accept(listener, (struct sockaddr*) &listener_address, &listener_size);
-        gameState->players[gameState->playerCount].playerSocket = playerSocket;
-        pthread_mutex_lock(&(gameState->consoleMutex));
-        printf("BOUNCER: A player has joined the lobby\n");
-        pthread_mutex_unlock(&(gameState->consoleMutex));
-        pthread_create(&(gameState->players[gameState->playerCount].playerThread), NULL, playerThread, (void*) gameState->playerCount);//TODO: Change id
-        gameState->playerCount++;
+        if (playerSocket == -1)
+        {
+            if (gameState->closingTime)
+            {
+                break;
+            }
+        }
+        else
+        {
+            gameState->players[gameState->playerCount].playerSocket = playerSocket;
+            pthread_mutex_lock(&(gameState->consoleMutex));
+            printf("BOUNCER: A player has joined the lobby\n");
+            pthread_mutex_unlock(&(gameState->consoleMutex));
+            pthread_create(&(gameState->players[gameState->playerCount].playerThread), NULL, playerThread, (void*) gameState->playerCount);//TODO: Change id
+            gameState->playerCount++;
+        }
     }
 
-    pthread_join(gameState->players[gameState->playerCount].playerThread, NULL);
-    printf("I'm done waiting for people\n");
+    pthread_mutex_lock(&(gameState->consoleMutex));
+    printf("BOUNCER: I will start escorting people out\n");
+    pthread_mutex_unlock(&(gameState->consoleMutex));
+    for (int i = 0; i < 10; i++)
+    {
+        if (gameState->players[i].atTable)
+        {
+            pthread_mutex_lock(&(gameState->consoleMutex));
+            printf("BOUNCER: Waiting for player %d\n", i);
+            pthread_mutex_unlock(&(gameState->consoleMutex));
+            pthread_join(gameState->players[i].playerThread, NULL);
+            pthread_mutex_lock(&(gameState->consoleMutex));
+            printf("BOUNCER: Player %d has left\n", i);
+            pthread_mutex_unlock(&(gameState->consoleMutex));
+        }
+    }
+    
+    pthread_mutex_lock(&(gameState->consoleMutex));
+    printf("BOUNCER: I've kicked everyone out\n");
+    pthread_mutex_unlock(&(gameState->consoleMutex));
     return (void*) 0;
 }
