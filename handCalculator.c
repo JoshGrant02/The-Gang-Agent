@@ -1,8 +1,19 @@
+//handCalculator.c
+//Josh Grant
+//12/08/2023
+
+/*
+ * This file contains logic to convert a card integer into its character representation, and to calculate the rank of a card.
+ */
+
 #include <stdint.h>
 #include <stdio.h>
 #include "deck.h"
 #include "handCalculator.h"
 
+//Converts an integer card value to a character representation of it, consisting of hte value and the suit.
+//Card: the integer card
+//ValueBuffer: a character buffer for the value of the card
 void getCardValue(int card, char valueBuffer[3])
 {
     valueBuffer[2] = (char) 0; //Null terminator at the end

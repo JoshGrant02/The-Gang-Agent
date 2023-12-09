@@ -1,3 +1,11 @@
+//butler.h
+//Josh Grant
+//12/08/2023
+
+/*
+ * This file contains function prototypes the butler
+ */
+
 #ifndef H_BUTLER
 #define H_BUTLER
 

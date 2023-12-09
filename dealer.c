@@ -1,3 +1,11 @@
+//dealer.c
+//Josh Grant
+//12/08/2023
+
+/*
+ * This file has the logic for the dealer thread
+ */
+
 #include <signal.h>
 #include <pthread.h>
 #include <sys/types.h>
@@ -11,14 +19,17 @@
 
 static game_state_t* gameState;
 
+//Sets a file scoped pointer to the game state so it is accessable
 void initializeDealer(game_state_t* _gameState)
 {
     gameState = _gameState;
     initializeDeck();
 }
 
+//The entrypoint for the dealer
 void* dealerEntry(void* dealerParam)
 {
+    //Loop until broken out of 
     while (1)
     {
         pthread_mutex_lock(&(gameState->consoleMutex));
@@ -31,10 +42,13 @@ void* dealerEntry(void* dealerParam)
         pthread_mutex_lock(&(gameState->consoleMutex));
         printf("DEALER: Dealing player cards\n");
         pthread_mutex_unlock(&(gameState->consoleMutex));
+        //Deal two cards
         for (int i = 0; i <= 1; i++)
         {
+            //Deal to each player, one card at a time
             for (int j = 0; j < 10; j++)
             {
+                //Make sure the player is at the table before dealing to them
                 if (gameState->players[j].atTable)
                 {
                     int card = dealCard();
@@ -44,6 +58,7 @@ void* dealerEntry(void* dealerParam)
                     int signal = i == 0 ? SIGUSR1 : SIGUSR2;
                     union sigval player;
                     player.sival_int = j;
+                    //Send a signal to the corresponding butler to alert that a card is dealt
                     int rc = pthread_sigqueue(gameState->players[j].playerThread, signal, player);
                     if (rc != 0)
                     {
@@ -53,6 +68,8 @@ void* dealerEntry(void* dealerParam)
                 }
             }
         }
+
+        //Deal 5 cards to the table
         pthread_mutex_lock(&(gameState->consoleMutex));
         printf("DEALER: Dealing table cards\n");
         burnCard();
@@ -70,10 +87,13 @@ void* dealerEntry(void* dealerParam)
         int winningPlayer = -1;
         int winningPlayerRank = 0;
         int winningHand[HANDSIZE];
+        //Check each player's hand rank
         for (int i = 0; i < 10; i++)
         {
+            //Make sure player is in game
             if (gameState->players[i].atTable)
             {
+                //Create a 7 card hand of the 5 on the table and two for the player
                 int hand[HANDSIZE];
                 for (int cardNum = 0; cardNum < 5; cardNum++)
                 {
@@ -82,7 +102,10 @@ void* dealerEntry(void* dealerParam)
                 hand[5] = gameState->players[i].cards[0];
                 hand[6] = gameState->players[i].cards[1];
 
+                //Get the integer rank of the hand
                 int playerRank = calculateRank(hand);
+                
+                //Compare it to highest rank, and replace if higher
                 if (playerRank > winningPlayerRank)
                 {
                     winningPlayer = i;
@@ -94,6 +117,8 @@ void* dealerEntry(void* dealerParam)
                 #endif
             }
         }
+
+        //Check to figure out what hand the winning player had
         char handName[12];
         switch (winningPlayerRank & HANDINDICATOR)
         {
@@ -129,6 +154,7 @@ void* dealerEntry(void* dealerParam)
                 }
         }
 
+        //Print out winning hand rank and cards
         pthread_mutex_lock(&(gameState->consoleMutex));
         printf("DEALER: Player %d won with a %s:\n", winningPlayer, handName);
         for (int i = 0; i < HANDSIZE; i++)
@@ -143,8 +169,10 @@ void* dealerEntry(void* dealerParam)
         printf("\n\n");
         pthread_mutex_unlock(&(gameState->consoleMutex));
 
+        //Make sure the game is still going
         if (gameState->closingTime) break;
 
+        //Wait 10 sec before looping back to redeal
         pthread_mutex_lock(&(gameState->consoleMutex));
         printf("DEALER: The next hand will start in 10 seconds..\n");
         pthread_mutex_unlock(&(gameState->consoleMutex));

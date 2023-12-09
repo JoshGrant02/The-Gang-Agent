@@ -1,3 +1,11 @@
+//handCalculator.h
+//Josh Grant
+//12/08/2023
+
+/*
+ * This file contains struct macro definitions and function prototypes for hand calculation
+ */
+
 #ifndef H_HANDCALCULATOR
 #define H_HANDCALCULATOR
 

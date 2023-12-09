@@ -1,3 +1,11 @@
+//tableManager.c
+//Josh Grant
+//12/08/2023
+
+/*
+ * This file contains the main entrypoint for The Poker Table and manages console commands
+ */
+
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
@@ -17,10 +25,13 @@ static char thePokerTable[] = {36, 36, 36, 36, 36, 36, 36, 36, 92, 32, 36, 36, 9
 
 static game_state_t* gameState;
 
+//Entrypoint
 int main(int argc, char** argv)
 {
+    //Print logo
     printf("Welcome to\n%s\n", thePokerTable);
 
+    //Create gmae state
     gameState = malloc(sizeof(game_state_t));
     pthread_mutex_init(&(gameState->consoleMutex), NULL);
 
@@ -29,6 +40,7 @@ int main(int argc, char** argv)
     printf("Mutex: %d\n", gameState->consoleMutex);
     #endif
 
+    //Give game state to other files
     initializeDealer(gameState);
     initializeBouncer(gameState);
     initializePlayers(gameState);
@@ -36,27 +48,33 @@ int main(int argc, char** argv)
     pthread_t bouncer = 0;
     pthread_t dealer = 0;
 
+    //Create teh bouncer
     pthread_create(&bouncer, NULL, bouncerEntry, (void*)0);
 
     char buffer[100];
     buffer[0] = 0;
 
+    //Loop, accepting commands
     while (1)
     {
         fgets(buffer, 100, stdin);
+        //Start command starts the table
         if (strcmp(buffer, "start\n") == 0)
         {
             pthread_mutex_lock(&(gameState->consoleMutex));
+            //Make sure we haven't started
             if (gameState->table.isActive)
             {
                 printf("MANAGER: The game is already running\n");
             }
             else
             {
+                //Make sure we have enough players
                 if (gameState->playerCount < 2)
                 {
                     printf("MANAGER: There are not enough players in the lobby. Try again later\n");
                 }
+                //If we have enough, create a dealer
                 else
                 {
                     printf("MANAGER: The game is starting\n");
@@ -66,6 +84,7 @@ int main(int argc, char** argv)
             }
             pthread_mutex_unlock(&(gameState->consoleMutex));
         }
+        //Quit command quits the table
         else if (strcmp(buffer, "quit\n") == 0)
         {
             pthread_mutex_lock(&(gameState->consoleMutex));
@@ -76,6 +95,7 @@ int main(int argc, char** argv)
         }
     }
 
+    //Rejoin the threads
     pthread_join(dealer, NULL);
     pthread_mutex_lock(&(gameState->consoleMutex));
     printf("I collected the dealer\n");

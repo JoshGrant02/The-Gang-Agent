@@ -1,3 +1,11 @@
+//player.c
+//Josh Grant
+//12/08/2023
+
+/*
+ * This file has the logic for the player
+ */
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -12,60 +20,56 @@
 #define CLIENT_NAME "/tmp/player"
 
 void printHelp();
-void* receiver(void* param);
 
+//Main function
 int main(int argc, char** argv)
 {
     int sock;
-
+    //Create socket for connecting
     if ((sock = socket( AF_UNIX, SOCK_STREAM, 0 )) < 0)
     {
         perror("Socket failed to create");
         exit(1);
     }
 
+    //Create address
     struct sockaddr_un sock_address;
-
     sock_address.sun_family = AF_UNIX;
     strcpy(sock_address.sun_path,CLIENT_NAME);
 
-    // our little "unlink trick"
+    //Unlink if artifacted
     unlink(CLIENT_NAME);
 
-    // we must now bind the socket descriptor to the address info
+    //Bind socket
     if (bind(sock, (struct sockaddr *) &sock_address, sizeof(sock_address))<0)
     {
         printf("Socket failed to bind\n");
         exit(1);
     }
 
-    // Need to address server with same technique
+    //Server address
     struct sockaddr_un server;
-
-    // address family is AF_INET
-    // fill in INADDR_ANY for address (any of our IP addresses)
-    // for a client, this would be the desitation address
-    // the port number is per default or option above
-    // note that address and port must be in memory in network order
-
     server.sun_family = AF_UNIX;
     strcpy(server.sun_path,BOUNCER_NAME);
 
+    //Try to connect
     if (connect(sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
         printf("The Poker Table is currently not operating. Try again later\n");
         exit(1);
     }
     
+    //Loop, recieving info from the butler
     char buffer[sizeof(int)];
-
     while(1)
     {
         recv(sock, buffer, sizeof(int), 0);
         int card = 0;
+        //Decode byte array into int
         for (size_t i = 0; i < sizeof(int); ++i)
         {
             card |= buffer[i] << (8 * i);
         }
+        //-1 is indicator to finish
         if (card == -1)
         {
             printf("The table is quitting :( I am leaving\n");
@@ -115,6 +119,7 @@ int main(int argc, char** argv)
     return 0;
 }
 
+//Prints help message. None of this is implemented
 void printHelp()
 {
     printf("FOR THE PURPOSE OF THE CPE 2600 LAB, NONE OF THESE ARE IMPLEMENTED\n");

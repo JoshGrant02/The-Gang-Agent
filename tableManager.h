@@ -1,3 +1,11 @@
+//tableManager.h
+//Josh Grant
+//12/08/2023
+
+/*
+ * This file contains struct typedefs for the game state
+ */
+
 #ifndef H_TABLEMANAGER
 #define H_TABLEMANAGER
 
