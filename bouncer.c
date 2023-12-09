@@ -21,6 +21,11 @@ void initializeBouncer(game_state_t* _gameState)
 
 void* bouncerEntry(void* playerParam)
 {
+    #ifdef DEBUG
+    printf("Game State: %d\n", gameState);
+    printf("Mutex: %d\n", gameState->consoleMutex);
+    #endif
+
     int listener = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
     unlink(BOUNCER_NAME);
     

@@ -24,6 +24,11 @@ int main(int argc, char** argv)
     gameState = malloc(sizeof(game_state_t));
     pthread_mutex_init(&(gameState->consoleMutex), NULL);
 
+    #ifdef DEBUG
+    printf("Game State: %d\n", gameState);
+    printf("Mutex: %d\n", gameState->consoleMutex);
+    #endif
+
     initializeDealer(gameState);
     initializeBouncer(gameState);
     initializePlayers(gameState);

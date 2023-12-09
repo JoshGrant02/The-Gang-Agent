@@ -31,6 +31,9 @@ I also used "thread signals" to allow the dealer to signal the butlers when a ca
 
 Shared memory/Heap. I don't explicitely use "shared memory" (shm), but as all my operations are in different threads, I make use of the heap to track the game state. I created a struct that stores all relevant data for the game that I initailized on the heap and created a static reference to in each file.
 
+## Calculating Winning Hands
+This is something I am especially proud of for this application, is that I formulated a way to encode the rank (strength) of each hand into a 16 bit integer, so once computed, the integers can simply be compared to determine which hand is better. All of the logic is implemented in the `handCalculator.c` file, and I have uploaded the file I used to plan and document this encoding as `Poker hand strength encoding.xlsx`.
+
 ## Bugs
 While I tried to make the normal operation of this program as smooth as possible, due to time constraints, I was not able to check for/handle every edge case, and my program does have some bugs. The most common bug is if you either terminate the table or player forcefully (ctrl+C), the other party will not know that the connection has been broken, and may encounter unintentional behavior.
 
