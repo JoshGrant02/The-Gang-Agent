@@ -8,3 +8,5 @@ build
 #Executables
 pokerPlayer
 thePokerTable
+
+__pycache__

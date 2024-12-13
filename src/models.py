@@ -1,6 +1,12 @@
 from pydantic import BaseModel
 from enum import Enum
 
+class Turn(Enum):
+    FLOP = 0
+    TURN = 1
+    RIVER = 2
+    DONE = 3
+
 class Suit(Enum):
     HEART = 0
     DIAMOND = 1
@@ -59,13 +65,11 @@ class Potential(Enum):
     IMPOSSIBLE = 0
 
 class HandFeatures(BaseModel):
-    # Current rank of the hand
-    rank: Rank
-    # The kickers of the hand
-    two_pair_potential: Potential
-    three_of_a_kind_potential: Potential
-    straight_potential: Potential
-    flush_potential: Potential
-    full_house_potential: Potential
-    four_of_a_kind_potential: Potential
-    straight_flush_potential: Potential
+    rank: Rank = Rank.HIGH_CARD
+    two_pair_potential: Potential = Potential.POSSIBLE
+    three_of_a_kind_potential: Potential = Potential.POSSIBLE
+    straight_potential: Potential = Potential.POSSIBLE
+    flush_potential: Potential = Potential.POSSIBLE
+    full_house_potential: Potential = Potential.POSSIBLE
+    four_of_a_kind_potential: Potential = Potential.POSSIBLE
+    straight_flush_potential: Potential = Potential.POSSIBLE

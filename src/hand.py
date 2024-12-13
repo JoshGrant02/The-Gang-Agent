@@ -1,8 +1,11 @@
 from models import Card, Suit, HandFeatures, Potential, Rank, MAX_CARDS
 
 class Hand:
-    def __init__(self, cards: list[Card]):
-        self.cards = cards
+    def __init__(self, cards: list[Card] = None):
+        if cards == None:
+            self.cards = []
+        else:
+            self.cards = cards
         self.features = HandFeatures()
 
     def recalculate_hand_features(self):
@@ -11,7 +14,7 @@ class Hand:
         card_counts = [0 for _ in range(15)]
         for card in sorted_cards:
             card_counts[card.value] = card_counts[card.value] + 1
-        two_pair_potential, trip_potential, full_house_potential, quad_potential = Hand.calculate_pair_like_potentials(card_counts, cards_left)
+        pair_potention, two_pair_potential, trip_potential, full_house_potential, quad_potential = Hand.calculate_pair_like_potentials(card_counts, cards_left)
         straight_potential = Hand.calculate_straight_potential(sorted_cards, cards_left)
         flush_potential = Hand.calculate_flush_potential(sorted_cards, cards_left)
         straight_flush_potential = Hand.calculate_straight_flush_potential(sorted_cards, cards_left)
@@ -39,11 +42,14 @@ class Hand:
             rank = Rank.THREE_OF_A_KIND
         elif two_pair_potential == Potential.HAS_RANK:
             rank = Rank.TWO_PAIR
+        elif pair_potention == Potential.HAS_RANK:
+            rank = Rank.ONE_PAIR
 
         self.features.rank = rank
 
     @staticmethod
     def calculate_pair_like_potentials(card_counts: list[int], cards_left: int) -> tuple[Potential, Potential, Potential, Potential]:
+        num_cards = len(card_counts)
         pair_counts = 0
         trip_counts = 0
         quad_counts = 0
@@ -58,10 +64,16 @@ class Hand:
         pair_eligibles = pair_counts + trip_counts + quad_counts
         trip_eligibles = trip_counts + quad_counts
 
+        pair_potentional = Potential.IMPOSSIBLE
+        if pair_eligibles >= 1:
+            pair_potentional = Potential.HAS_RANK
+        elif cards_left >= 1:
+            pair_potentional = Potential.POSSIBLE
+
         two_pair_potential = Potential.IMPOSSIBLE
         if pair_eligibles >= 2:
             two_pair_potential = Potential.HAS_RANK
-        elif pair_eligibles == 1 and cards_left >= 1:
+        elif pair_eligibles == 1 and cards_left >= 1 and num_cards > 2:
             two_pair_potential = Potential.ONE_CARD_AWAY
         elif cards_left >= 2:
             two_pair_potential = Potential.POSSIBLE
@@ -83,6 +95,8 @@ class Hand:
             full_house_potential = Potential.ONE_CARD_AWAY
         elif pair_eligibles >= 1 and cards_left >= 2: # Has pair, needs second pair and trip upgrade
             full_house_potential = Potential.POSSIBLE
+        elif cards_left >= 3: # Assume at least 2 cards are out
+            full_house_potential = Potential.POSSIBLE
 
         quad_potential = Potential.IMPOSSIBLE
         if quad_counts >= 1:
@@ -91,10 +105,10 @@ class Hand:
             quad_potential = Potential.ONE_CARD_AWAY
         elif pair_counts >= 1 and cards_left >= 2:
             quad_potential = Potential.POSSIBLE
-        else:
-            quad_potential = Potential.IMPOSSIBLE
+        elif cards_left >= 3:
+            quad_potential = Potential.POSSIBLE
 
-        return two_pair_potential, trip_potential, full_house_potential, quad_potential
+        return pair_potentional, two_pair_potential, trip_potential, full_house_potential, quad_potential
     
 
     @staticmethod
@@ -170,27 +184,28 @@ class Hand:
             return Potential.HAS_RANK
         elif least_cards_needed == 1 and cards_left >= 1:
             return Potential.ONE_CARD_AWAY
-        elif least_cards_needed == 2 and cards_left >= 2:
+        elif least_cards_needed <= cards_left:
             return Potential.POSSIBLE
         else:
             return Potential.IMPOSSIBLE
 
     @staticmethod
-    def calculate_flush_potential(self, sorted_cards: list[Card], cards_left: int) -> Potential:
+    def calculate_flush_potential(sorted_cards: list[Card], cards_left: int) -> Potential:
         suits = [card.suit for card in sorted_cards]
         heart_counts = 0
         diamond_counts = 0
         spade_counts = 0
         club_counts = 0
 
+        breakpoint()
         for suit in suits:
-            if suit == Suit.HEART:
+            if suit == Suit.HEART.value:
                 heart_counts += 1
-            elif suit == Suit.DIAMOND:
+            elif suit == Suit.DIAMOND.value:
                 diamond_counts += 1
-            elif suit == Suit.SPADE:
+            elif suit == Suit.SPADE.value:
                 spade_counts += 1
-            elif suit == Suit.CLUB:
+            elif suit == Suit.CLUB.value:
                 club_counts += 1
 
         cards_needed_for_flush = 5 - max(heart_counts, diamond_counts, spade_counts, club_counts)
@@ -198,7 +213,7 @@ class Hand:
             return Potential.HAS_RANK
         elif cards_needed_for_flush == 1 and cards_left >= 1:
             return Potential.ONE_CARD_AWAY
-        elif cards_needed_for_flush == 2 and cards_left >= 2:
+        elif cards_needed_for_flush <= cards_left:
             return Potential.POSSIBLE
         else:
             return Potential.IMPOSSIBLE
@@ -206,7 +221,9 @@ class Hand:
     @staticmethod
     def calculate_straight_flush_potential(sorted_cards: list[Card], cards_left: int) -> Potential:
         suits = [Suit.HEART, Suit.DIAMOND, Suit.SPADE, Suit.CLUB]
-        values = [card.value for card in sorted_cards if card.suit == suit for suit in suits]
+        values = []
+        for suit in suits:
+            values.append([card.value for card in sorted_cards if card.suit == suit.value])
         straights = [
             [1, 2, 3, 4, 5],
             [2, 3, 4, 5, 6],
@@ -221,10 +238,10 @@ class Hand:
         ]
         cards_needed_for_straight_flush = []
         for straight in straights: # Loop through all possible straights
-            for suit in suits: # Loop through all suits
+            for suit_index in range(len(suits)): # Loop through all suits
                 straight_flush_cards_satisfied = 0
                 for straight_card in straight: # Loop through all cards in the straight
-                    if straight_card in values[suit]: # Add card if in suit
+                    if straight_card in values[suit_index]: # Add card if in suit
                         straight_flush_cards_satisfied += 1
                 cards_needed_for_straight_flush.append(5 - straight_flush_cards_satisfied)
 
@@ -233,13 +250,25 @@ class Hand:
             return Potential.HAS_RANK
         elif least_cards_needed == 1 and cards_left >= 1:
             return Potential.ONE_CARD_AWAY
-        elif least_cards_needed == 2 and cards_left >= 2:
+        elif least_cards_needed <= cards_left:
             return Potential.POSSIBLE
         else:
             return Potential.IMPOSSIBLE
 
     def add_card(self, card: Card):
         self.cards.append(card)
-        self.recalculate_hand_features(self.cards)
+        if len(self.cards) > 1:
+            self.recalculate_hand_features()
 
-        
+    def __str__(self):
+        return ", ".join([card.__str__() for card in self.cards])
+
+
+if __name__ == "__main__":
+    hand = Hand()
+    hand.add_card(Card(value=6,suit=Suit.SPADE))
+    hand.add_card(Card(value=5,suit=Suit.HEART))
+    hand.add_card(Card(value=10,suit=Suit.HEART))
+    hand.add_card(Card(value=7,suit=Suit.SPADE))
+    hand.add_card(Card(value=3,suit=Suit.HEART))
+    hand.add_card(Card(value=2,suit=Suit.HEART))
