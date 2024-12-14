@@ -66,6 +66,11 @@ class Potential(Enum):
 
 class HandFeatures(BaseModel):
     rank: Rank = Rank.HIGH_CARD
+    first_card: int = 0
+    second_card: int = 0
+    third_card: int = 0
+    fourth_card: int = 0
+    fifth_card: int = 0
     two_pair_potential: Potential = Potential.POSSIBLE
     three_of_a_kind_potential: Potential = Potential.POSSIBLE
     straight_potential: Potential = Potential.POSSIBLE
