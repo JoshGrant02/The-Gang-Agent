@@ -28,8 +28,8 @@ class Hand:
         pair_eligibles = pair_counts + trip_counts + quad_counts
         trip_eligibles = trip_counts + quad_counts
 
-        pair_potentiontial, pair_hand = Hand.calculate_pair_potential(card_counts, cards_left, pair_eligibles)
-        two_pair_potential, two_pair_hand = Hand.calculate_two_pair_potential(card_counts, cards_left, pair_eligibles)
+        pair_potentiontial, pair_hand = Hand.calculate_pair_potential(cards_left, pair_eligibles)
+        two_pair_potential, two_pair_hand = Hand.calculate_two_pair_potential(cards_left, pair_eligibles)
         trip_potential, trip_hand = Hand.calculate_trips_potential(card_counts, cards_left, pair_counts, trip_eligibles)
         straight_potential, straight_hand = Hand.calculate_straight_potential(sorted_cards, cards_left)
         flush_potential, flush_hand = Hand.calculate_flush_potential(sorted_cards, cards_left)
@@ -45,9 +45,10 @@ class Hand:
         self.features.four_of_a_kind_potential = quad_potential
         self.features.straight_flush_potential = straight_flush_potential
 
-        brakpoint()
+        breakpoint()
         rank = Rank.HIGH_CARD
-        hand = sorted_cards[::-1].extend([0, 0, 0, 0, 0])
+        hand = [card.value for card in sorted_cards[::-1]]
+        hand.extend([0, 0, 0])
         if straight_flush_potential == Potential.HAS_RANK:
             rank = Rank.STRAIGHT_FLUSH
             hand = straight_flush_hand
@@ -84,46 +85,53 @@ class Hand:
         self.features.fifth_card = hand[4]
 
     @staticmethod
-    def calculate_pair_potential(card_counts: list[int], cards_left: int, pair_eligibles: int) -> tuple[Potential, list[int] | None]:
-        hand_cards = None
+    def calculate_pair_potential(cards_left: int, pair_eligibles: int) -> Potential:
         potentional = Potential.IMPOSSIBLE
         if pair_eligibles >= 1:
             potentional = Potential.HAS_RANK
-            pair_card = 14 - np.argmax(card_counts[::-1])
-            hand_cards = [pair_card]
+        elif cards_left >= 1:
+            potentional = Potential.POSSIBLE
+
+        return potentional
+
+    @staticmethod
+    def calculate_pair_hand(card_counts: list[int], cards_left: int) -> list[int]:
+        pair_card = 14 - np.argmax(card_counts[::-1])
+        hand_cards = [pair_card]*2
+        if cards_left == 5:
+            hand_cards.extend([0, 0, 0])
+        else:
             hand_length = 1
             reverse_index = 1
             while hand_length < 5:
                 if card_counts[-reverse_index] > 0 and 15 - reverse_index != pair_card:
                     hand_cards.append(15 - reverse_index)
                     hand_length += 1
-        elif cards_left >= 1:
-            potentional = Potential.POSSIBLE
-
-        return potentional, hand_cards
 
     @staticmethod
-    def calculate_two_pair_potential(card_counts: list[int], cards_left: int, pair_eligibles: int) -> tuple[Potential, list | None]:
-        hand_cards = None
+    def calculate_two_pair_potential(cards_left: int, pair_eligibles: int) -> Potential:
         potential = Potential.IMPOSSIBLE
         if pair_eligibles >= 2:
             potential = Potential.HAS_RANK
-            card_counts_copy = card_counts.copy()
-            two_pair_major = 14 - np.argmax(card_counts_copy[::-1])
-            card_counts_copy[two_pair_major - 2] = 0
-            two_pair_minor = 14 - np.argmax(card_counts_copy[::-1])
-            kicker = 0
-            for card_index in range(len(card_counts))[::-1]:
-                if card_counts[card_index] > 0 and card_index + 2 != two_pair_major and card_index + 2 != two_pair_minor:
-                    kicker = card_index + 2
-                    break
-            hand_cards = [two_pair_major]*2 + [two_pair_minor]*2 + [kicker]
         elif pair_eligibles == 1 and cards_left >= 1 and cards_left < 5:
             potential = Potential.ONE_CARD_AWAY
         elif cards_left >= 2:
             potential = Potential.POSSIBLE
 
-        return (potential, hand_cards)
+        return potential
+    
+    @staticmethod
+    def calculate_two_pair_hand(card_counts: list[int]) -> list[int]:
+        card_counts_copy = card_counts.copy()
+        two_pair_major = 14 - np.argmax(card_counts_copy[::-1])
+        card_counts_copy[two_pair_major - 2] = 0
+        two_pair_minor = 14 - np.argmax(card_counts_copy[::-1])
+        kicker = 0
+        for card_index in range(len(card_counts))[::-1]:
+            if card_counts[card_index] > 0 and card_index + 2 != two_pair_major and card_index + 2 != two_pair_minor:
+                kicker = card_index + 2
+                break
+        return [two_pair_major]*2 + [two_pair_minor]*2 + [kicker]
 
     @staticmethod
     def calculate_trips_potential(card_counts: list[int], cards_left: int, pair_counts: int, trip_eligibles: int) -> tuple[Potential, list | None]:
@@ -315,7 +323,7 @@ class Hand:
 
     def add_card(self, card: Card):
         self.cards.append(card)
-        if len(self.cards) > 1:
+        if len(self.cards) == 2 or len(self.cards) >= 5:
             self.recalculate_hand_features()
 
     def __str__(self):
