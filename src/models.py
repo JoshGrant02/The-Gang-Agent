@@ -5,7 +5,8 @@ class Turn(Enum):
     FLOP = 0
     TURN = 1
     RIVER = 2
-    DONE = 3
+    FINAL_GUESS = 3
+    DONE = 4
 
 class Suit(Enum):
     HEART = 0
