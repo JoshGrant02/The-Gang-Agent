@@ -2,12 +2,12 @@ from models import Card, Suit, HandFeatures, Potential, Rank, MAX_CARDS
 import numpy as np
 
 class Hand:
-    def __init__(self, cards: list[Card] = None, player_num: int = None):
+    def __init__(self, cards: list[Card] | None = None, player_num: int | None = None):
         self.player_num = player_num
         if cards == None:
-            self.cards = []
+            self.cards: list[Card] = []
         else:
-            self.cards = cards
+            self.cards: list[Card] = cards
         self.features = HandFeatures()
 
     def recalculate_hand_features(self):
@@ -48,7 +48,6 @@ class Hand:
 
         rank = Rank.HIGH_CARD
         hand = [card.value for card in sorted_cards[::-1]]
-        hand.extend([0, 0, 0])
         if straight_flush_potential == Potential.HAS_RANK:
             rank = Rank.STRAIGHT_FLUSH
             hand = straight_flush_hand
@@ -73,6 +72,7 @@ class Hand:
         elif pair_potentiontial == Potential.HAS_RANK:
             rank = Rank.ONE_PAIR
             hand = Hand.calculate_pair_hand(card_counts, cards_left)
+        hand.extend([0, 0, 0])
 
         self.features.rank = rank
         self.features.first_card = hand[0]
@@ -93,7 +93,7 @@ class Hand:
 
     @staticmethod
     def calculate_pair_hand(card_counts: list[int], cards_left: int) -> list[int]:
-        pair_card = 14 - np.argmax(card_counts[::-1])
+        pair_card = int(14 - np.argmax(card_counts[::-1]))
         hand_cards = [pair_card]*2
         hand_length = 1
         reverse_index = 1
@@ -120,11 +120,10 @@ class Hand:
     
     @staticmethod
     def calculate_two_pair_hand(card_counts: list[int]) -> list[int]:
-        breakpoint()
         card_counts_copy = card_counts.copy()
-        two_pair_major = 14 - np.argmax(card_counts_copy[::-1])
+        two_pair_major = int(14 - np.argmax(card_counts_copy[::-1]))
         card_counts_copy[two_pair_major - 2] = 0
-        two_pair_minor = 14 - np.argmax(card_counts_copy[::-1])
+        two_pair_minor = int(14 - np.argmax(card_counts_copy[::-1]))
         kicker = 0
         for card_index in range(len(card_counts))[::-1]:
             if card_counts[card_index] > 0 and card_index + 2 != two_pair_major and card_index + 2 != two_pair_minor:
@@ -133,8 +132,7 @@ class Hand:
         return [two_pair_major]*2 + [two_pair_minor]*2 + [kicker]
 
     @staticmethod
-    def calculate_trips_potential(pair_counts: int, trip_eligibles: int, cards_left: int) -> tuple[Potential, list | None]:
-        hand_cards = None
+    def calculate_trips_potential(pair_counts: int, trip_eligibles: int, cards_left: int) -> Potential:
         potential = Potential.IMPOSSIBLE
         if trip_eligibles >= 1:
             potential = Potential.HAS_RANK
@@ -143,11 +141,11 @@ class Hand:
         elif cards_left >= 2:
             potential = Potential.POSSIBLE
 
-        return (potential, hand_cards)
+        return potential
 
     @staticmethod
     def calculate_trips_hand(card_counts: list[int]) -> list[int]:
-        trip_card = 14 - np.argmax(card_counts[::-1])
+        trip_card = int(14 - np.argmax(card_counts[::-1]))
         hand_cards = [trip_card]*3
         for card_index in range(len(card_counts))[::-1]:
             if card_counts[card_index] > 0 and card_index != trip_card:
@@ -157,6 +155,8 @@ class Hand:
             if card_counts[card_index] > 0 and card_index != trip_card:
                 hand_cards.append(card_index + 2)
                 break
+
+        return hand_cards
 
     @staticmethod
     def calculate_straight_potential_and_hand(sorted_cards: list[Card], cards_left: int) -> tuple[Potential, list[int] | None]:
@@ -237,8 +237,7 @@ class Hand:
         return (potential, hand_cards)
 
     @staticmethod
-    def calculate_full_house_potential(pair_counts: int, pair_eligibles: int, trip_eligibles: int, cards_left: int) -> tuple[Potential, list[int] | None]:
-        hand_cards = None
+    def calculate_full_house_potential(pair_counts: int, pair_eligibles: int, trip_eligibles: int, cards_left: int) -> Potential:
         potential = Potential.IMPOSSIBLE
         if trip_eligibles >= 2 or (trip_eligibles == 1 and pair_counts >= 1):
             potential = Potential.HAS_RANK
@@ -251,19 +250,18 @@ class Hand:
         elif cards_left >= 3: # Assume at least 2 cards are out
             potential = Potential.POSSIBLE
 
-        return (potential, hand_cards)
+        return potential
 
     @staticmethod
     def calculate_full_house_hand(card_counts: list[int]) -> list[int]:
         card_counts_copy = card_counts.copy()
-        full_house_major = 14 - np.argmax(card_counts_copy[::-1])
+        full_house_major = int(14 - np.argmax(card_counts_copy[::-1]))
         card_counts_copy[full_house_major - 2] = 0
-        full_house_minor = 14 - np.argmax(card_counts_copy[::-1])
+        full_house_minor = int(14 - np.argmax(card_counts_copy[::-1]))
         return [full_house_major]*3 + [full_house_minor]*2
         
     @staticmethod
-    def calculate_quads_potential(quad_counts: int, trip_counts: int, pair_counts: int, cards_left: int) -> tuple[Potential, list[int] | None]:
-        hand_cards = None
+    def calculate_quads_potential(quad_counts: int, trip_counts: int, pair_counts: int, cards_left: int) -> Potential:
         potential = Potential.IMPOSSIBLE
         if quad_counts >= 1:
             potential = Potential.HAS_RANK
@@ -274,11 +272,11 @@ class Hand:
         elif cards_left >= 3:
             potential = Potential.POSSIBLE
 
-        return (potential, hand_cards)
+        return potential
 
     @staticmethod
     def calculate_quads_hand(card_counts: list[int]) -> list[int]:
-        quad_card = np.argmax(card_counts) + 2 # Add 2 to argmax because index 0 is 2
+        quad_card = int(np.argmax(card_counts) + 2) # Add 2 to argmax because index 0 is 2
         hand_cards = [quad_card]*4
         if len(card_counts) == 4:
             hand_cards.append(0)

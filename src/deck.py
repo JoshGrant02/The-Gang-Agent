@@ -48,7 +48,8 @@ if __name__ == "__main__":
     print("Drawing:", deck.draw())
     print("Drawing:", deck.draw())
     print("Drawing:", deck.draw())
-    print("Burning:", deck.burn())
+    deck.burn()
+    print("Burning")
     print("Cards Left:", deck.cards_left())
     print("Cards Dealt:", deck.cards_dealt())
 
@@ -57,9 +58,11 @@ if __name__ == "__main__":
     print("Cards Left:", deck.cards_left())
     print("Cards Dealt:", deck.cards_dealt())
     print("Drawing:", deck.draw())
-    print("Burning:", deck.burn())
+    deck.burn()
+    print("Burning")
     print("Drawing:", deck.draw())
-    print("Burning:", deck.burn())
+    deck.burn()
+    print("Burning")
     print("Cards Left:", deck.cards_left())
     print("Cards Dealt:", deck.cards_dealt())
 
