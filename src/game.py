@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from hand import Hand
 from deck import Deck
 from models import Turn
+from typing import List
 
 class TheGang():
     NUM_PLAYERS = 4
@@ -23,7 +24,7 @@ class TheGang():
 
         return [hand.features for hand in self.hands]
 
-    def reward(self, actions: list[int]) -> list[int]:
+    def reward(self, actions: List[int]) -> List[int]:
         hand_order = self.hands.copy()
         hand_order.sort(key=lambda x: (
             x.features.rank.value,
@@ -48,7 +49,7 @@ class TheGang():
                 rewards[player_num] = 0
         return rewards
 
-    def generate_state_array(self, actions: list[int]):
+    def generate_state_array(self, actions: List[int]):
         state_array = []
         for player, hand in enumerate(self.hands):
             opposite_player_actions = actions.copy()
@@ -74,7 +75,7 @@ class TheGang():
             ])
         return state_array
 
-    def step(self, actions: list[int]):
+    def step(self, actions: List[int]):
         if self.turn == Turn.DONE.value:
             raise Exception("Game is finished, please reset")
         if len(actions) != self.NUM_PLAYERS:

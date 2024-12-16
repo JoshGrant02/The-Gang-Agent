@@ -1,13 +1,14 @@
 from models import Card, Suit, HandFeatures, Potential, Rank, MAX_CARDS
 import numpy as np
+from typing import List, Tuple, Optional
 
 class Hand:
-    def __init__(self, cards: list[Card] | None = None, player_num: int | None = None):
+    def __init__(self, cards: Optional[List[Card]] = None, player_num: Optional[int] = None):
         self.player_num = player_num
         if cards == None:
-            self.cards: list[Card] = []
+            self.cards: List[Card] = []
         else:
-            self.cards: list[Card] = cards
+            self.cards: List[Card] = cards
         self.features = HandFeatures()
 
     def recalculate_hand_features(self):
@@ -92,7 +93,7 @@ class Hand:
         return potentional
 
     @staticmethod
-    def calculate_pair_hand(card_counts: list[int], cards_left: int) -> list[int]:
+    def calculate_pair_hand(card_counts: List[int], cards_left: int) -> List[int]:
         pair_card = int(14 - np.argmax(card_counts[::-1]))
         hand_cards = [pair_card]*2
         hand_length = 1
@@ -119,7 +120,7 @@ class Hand:
         return potential
     
     @staticmethod
-    def calculate_two_pair_hand(card_counts: list[int]) -> list[int]:
+    def calculate_two_pair_hand(card_counts: List[int]) -> List[int]:
         card_counts_copy = card_counts.copy()
         two_pair_major = int(14 - np.argmax(card_counts_copy[::-1]))
         card_counts_copy[two_pair_major - 2] = 0
@@ -144,7 +145,7 @@ class Hand:
         return potential
 
     @staticmethod
-    def calculate_trips_hand(card_counts: list[int]) -> list[int]:
+    def calculate_trips_hand(card_counts: List[int]) -> List[int]:
         trip_card = int(14 - np.argmax(card_counts[::-1]))
         hand_cards = [trip_card]*3
         for card_index in range(len(card_counts))[::-1]:
@@ -159,7 +160,7 @@ class Hand:
         return hand_cards
 
     @staticmethod
-    def calculate_straight_potential_and_hand(sorted_cards: list[Card], cards_left: int) -> tuple[Potential, list[int] | None]:
+    def calculate_straight_potential_and_hand(sorted_cards: List[Card], cards_left: int) -> Tuple[Potential, Optional[List[int]]]:
         values = [card.value for card in sorted_cards]
         hand_cards = None
         straights = [
@@ -197,7 +198,7 @@ class Hand:
         return (potential, hand_cards)
 
     @staticmethod
-    def calculate_flush_potential_and_hand(sorted_cards: list[Card], cards_left: int) -> tuple[Potential, list[int] | None]:
+    def calculate_flush_potential_and_hand(sorted_cards: List[Card], cards_left: int) -> Tuple[Potential, Optional[List[int]]]:
         suits = [card.suit for card in sorted_cards]
         heart_counts = 0
         diamond_counts = 0
@@ -253,7 +254,7 @@ class Hand:
         return potential
 
     @staticmethod
-    def calculate_full_house_hand(card_counts: list[int]) -> list[int]:
+    def calculate_full_house_hand(card_counts: List[int]) -> List[int]:
         card_counts_copy = card_counts.copy()
         full_house_major = int(14 - np.argmax(card_counts_copy[::-1]))
         card_counts_copy[full_house_major - 2] = 0
@@ -275,7 +276,7 @@ class Hand:
         return potential
 
     @staticmethod
-    def calculate_quads_hand(card_counts: list[int]) -> list[int]:
+    def calculate_quads_hand(card_counts: List[int]) -> List[int]:
         quad_card = int(np.argmax(card_counts) + 2) # Add 2 to argmax because index 0 is 2
         hand_cards = [quad_card]*4
         if len(card_counts) == 4:
@@ -288,7 +289,7 @@ class Hand:
         return hand_cards
 
     @staticmethod
-    def calculate_straight_flush_potential_and_hand(sorted_cards: list[Card], cards_left: int) -> tuple[Potential, list[int] | None]:
+    def calculate_straight_flush_potential_and_hand(sorted_cards: List[Card], cards_left: int) -> Tuple[Potential, Optional[List[int]]]:
         suits = [Suit.HEART, Suit.DIAMOND, Suit.SPADE, Suit.CLUB]
         values = []
         hand_cards = None
